@@ -67,7 +67,9 @@ public class Reactor {
             Iterator<SelectionKey> iter = keys.iterator();
             while(iter.hasNext())
             {
-                handleIoEvent(iter.next());
+                SelectionKey key = iter.next();
+                iter.remove();
+                handleIoEvent(key);
             }
         }
     }
