@@ -4,6 +4,7 @@ import java.beans.Customizer;
 import java.io.IOException;
 import java.net.Socket;
 import java.nio.ByteBuffer;
+import java.nio.channels.SocketChannel;
 import java.util.Scanner;
 import java.util.function.Consumer;
 import java.util.function.BiConsumer;
@@ -21,8 +22,19 @@ public class App
         sock.close();
     }
 
+    private static void on_read(final byte[] data, final SocketChannel sock) throws IOException {
+        ByteBuffer buf = ByteBuffer.wrap("HTTP/1.0 200 OK\r\nContent-Length: 11\r\n\r\nHello World".getBytes());
+        sock.write(buf);
+        sock.close();
+    }
+
     private static void on_close(final Socket sock) throws IOException {
-        // System.out.println(sock.getInetAddress().toString()+" close");
+        System.out.println(sock.getInetAddress().toString()+" close");
+        sock.close();
+    }
+
+    private static void on_close(final SocketChannel sock) throws IOException {
+        System.out.println(sock.socket().getInetAddress().toString()+" close");
         sock.close();
     }
 
@@ -55,27 +67,47 @@ public class App
         System.out.println("2)Reactor Model Server - basic reactor");
         int model = scanner.nextInt();
         IServer server = null;
-        Consumer<Socket> closeCb = (sock) -> {
-            try {
-                on_close(sock);
-            } catch (final Exception e) {
-                // 在生产环境中您应该做异常处理
-                e.printStackTrace();
-            }
-        };
-        BiConsumer<byte[], Socket> readCb = (buf, sock) -> {
-            try {
-                on_read(buf, sock);
-            } catch (final Exception e) {
-                e.printStackTrace();
-            }
-        };
         try {
             switch (model) {
                 case 1:
+                    Consumer<Socket> closeCb = (sock) -> {
+                        try {
+                             on_close(sock);
+                        } 
+                        catch (final Exception e) {
+                            // 在生产环境中您应该做异常处理
+                              e.printStackTrace();
+                        }
+                    };
+                    BiConsumer<byte[], Socket> readCb = (buf, sock) -> {
+                        try {
+                          on_read(buf, sock);
+                        } 
+                        catch (final Exception e) {
+                         e.printStackTrace();
+                        }
+                    };
                     server = new SimpleThreadServer(port, readCb, closeCb);
                     break;
                 case 2:
+                    Consumer<SocketChannel> br_closeCb = (sock) -> {
+                        try {
+                            on_close(sock);
+                        } 
+                        catch (final Exception e) {
+                            // 在生产环境中您应该做异常处理
+                          e.printStackTrace();
+                        }
+                    };
+                    BiConsumer<byte[], SocketChannel> br_readCb = (buf, sock) -> {
+                        try {
+                            on_read(buf, sock);
+                        } 
+                        catch (final Exception e) {
+                            e.printStackTrace();
+                        }
+                    };
+                    server = new BasicReactorServer(port, br_closeCb, br_readCb);
                     break;
                 default:
                     System.out.println("Unknow Server Type");
