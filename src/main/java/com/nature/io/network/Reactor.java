@@ -2,6 +2,7 @@ package com.nature.io.network;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.channels.Channel;
 import java.nio.channels.ClosedChannelException;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
@@ -11,6 +12,8 @@ import java.util.Iterator;
 import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+
+import javax.lang.model.util.ElementScanner6;
 
 //反应器
 public class Reactor {
@@ -54,42 +57,54 @@ public class Reactor {
     //处理IO事件
     private void handleIoEvent(SelectionKey key) throws IOException
     {
-        //可读事件
-        if(key.isReadable())
+        if(key.isValid())
         {
-            SocketChannel channel = (SocketChannel) key.channel();
-            //8192是系统Socket缓冲区的大小
-            ByteBuffer buf = ByteBuffer.allocate(8192);
-            try 
+             //可读事件
+            if(key.isReadable())
             {
-                int r = channel.read(buf);
-                if(r > 0)
+                SocketChannel channel = (SocketChannel) key.channel();
+                //8192是系统Socket缓冲区的大小
+                ByteBuffer buf = ByteBuffer.allocate(8192);
+                try 
                 {
-                    _readCb.accept(buf.array(),channel);
+                    int r = channel.read(buf);
+                    if(r > 0)
+                    {
+                        _readCb.accept(buf.array(),channel);
+                    }
+                    else
+                    {
+                        _closeCb.accept(channel);
+                    }
+                }    
+                catch (ClosedChannelException ex) 
+                {
+                    _closeCb.accept(channel);    
                 }
-            } 
-            catch (ClosedChannelException ex) 
-            {
-                _closeCb.accept(channel);    
             }
-        }
-        //客户端连接事件
-        else if(key.isAcceptable())
-        {
-            //获取ServerSocketChannel
-            ServerSocketChannel channel = (ServerSocketChannel)key.channel();
-            //使用accept获取客户端
-            SocketChannel client = channel.accept();
-            //注册到Selector
-            register(client);
-            //调用客户端连接回调
-            _acceptCb.accept(client);
-        }
-        //客户端关闭事件
-        else if(key.isValid())
-        {
-            SocketChannel channel = (SocketChannel)key.channel();
-            _closeCb.accept(channel);
+            //客户端连接事件
+            else if(key.isAcceptable())
+            {
+                //获取ServerSocketChannel
+                ServerSocketChannel channel = (ServerSocketChannel)key.channel();
+                //使用accept获取客户端
+                SocketChannel client = channel.accept();
+                //注册到Selector
+                //register(client);
+                //调用客户端连接回调
+                _acceptCb.accept(client);
+            }
+            //可能是客户端关闭
+            else
+            {
+                Channel _ch = key.channel();
+                //客户端关闭
+                if(_ch instanceof SocketChannel)
+                {
+                    SocketChannel channel = (SocketChannel)_ch;
+                    _closeCb.accept(channel);
+                }
+            }
         }
     }
 

@@ -8,7 +8,7 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 //BasicReactor Server
-//Basic Reactor 模型
+//使用Basic Reactor 模型
 public class BasicReactorServer implements IServer {
 
     //Reactor
@@ -21,7 +21,15 @@ public class BasicReactorServer implements IServer {
     {
         _serverSocketChannel = ServerSocketChannel.open();
         _serverSocketChannel.bind(new InetSocketAddress(port));
-        _reactor = new Reactor(readCb, closeCb,(channel)->{});
+        _reactor = new Reactor(readCb, closeCb,(channel)->
+        {
+            try {
+                _reactor.register(channel);
+            } 
+            catch (Exception e) {
+                e.printStackTrace();
+            }
+        });
         _reactor.register(_serverSocketChannel);
     }
 
@@ -33,5 +41,6 @@ public class BasicReactorServer implements IServer {
     @Override
     public void close() throws IOException {
         _reactor.stop();
+        _serverSocketChannel.close();
     }
 }

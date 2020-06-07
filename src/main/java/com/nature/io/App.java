@@ -64,9 +64,28 @@ public class App
         System.out.println("Please chose a server:");
         System.out.println("1)Multithread Model Server - one connection per thread");
         System.out.println("2)Reactor Model Server - basic reactor");
+        System.out.println("3)Reactor Model Server With Thread Pool - reactor + thread pool");
+        System.out.println("4)MultiReactor Model Server(未完成) - one loop per thread");
         int model = scanner.nextInt();
         scanner.close();
         IServer server = null;
+        Consumer<SocketChannel> br_closeCb = (sock) -> {
+            try {
+                on_close(sock);
+            } 
+            catch (final Exception e) {
+                // 在生产环境中您应该做异常处理
+              e.printStackTrace();
+            }
+        };
+        BiConsumer<byte[], SocketChannel> br_readCb = (buf, sock) -> {
+            try {
+                on_read(buf, sock);
+            } 
+            catch (final Exception e) {
+                e.printStackTrace();
+            }
+        };
         try {
             switch (model) {
                 case 1:
@@ -90,24 +109,13 @@ public class App
                     server = new SimpleThreadServer(port, readCb, closeCb);
                     break;
                 case 2:
-                    Consumer<SocketChannel> br_closeCb = (sock) -> {
-                        try {
-                            on_close(sock);
-                        } 
-                        catch (final Exception e) {
-                            // 在生产环境中您应该做异常处理
-                          e.printStackTrace();
-                        }
-                    };
-                    BiConsumer<byte[], SocketChannel> br_readCb = (buf, sock) -> {
-                        try {
-                            on_read(buf, sock);
-                        } 
-                        catch (final Exception e) {
-                            e.printStackTrace();
-                        }
-                    };
                     server = new BasicReactorServer(port, br_closeCb, br_readCb);
+                    break;
+                case 3:
+                    server = new ThreadPoolReactorServer(port, br_readCb, br_closeCb);
+                    break;
+                case 4:
+                    server = new MultiReactorServer(port,Runtime.getRuntime().availableProcessors(), br_readCb, br_closeCb);
                     break;
                 default:
                     System.out.println("Unknow Server Type");
