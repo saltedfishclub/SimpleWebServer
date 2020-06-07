@@ -12,6 +12,7 @@ import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
+//反应器
 public class Reactor {
     //selector
     private Selector _selector;
@@ -22,7 +23,7 @@ public class Reactor {
     //客户端连接回调
     private Consumer<SocketChannel> _acceptCb;
     //cancel token
-    private boolean _token;
+    private volatile boolean _token;
 
     public Reactor(BiConsumer<byte[],SocketChannel> readCb,Consumer<SocketChannel> closeCb,Consumer<SocketChannel> acceptCb) throws IOException
     {

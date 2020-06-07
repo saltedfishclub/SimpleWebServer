@@ -65,6 +65,7 @@ public class App
         System.out.println("1)Multithread Model Server - one connection per thread");
         System.out.println("2)Reactor Model Server - basic reactor");
         int model = scanner.nextInt();
+        scanner.close();
         IServer server = null;
         try {
             switch (model) {

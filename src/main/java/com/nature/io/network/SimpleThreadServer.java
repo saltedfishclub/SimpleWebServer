@@ -12,15 +12,20 @@ import java.net.Socket;
 //使用 one connection per thread 模型
 public class SimpleThreadServer implements IServer{
 
+    //Server Socket
     private ServerSocket _sock;
 
+    //Acceptor
     private Acceptor _acceptor;
 
+    //数据到达回调
     private BiConsumer<byte[],Socket> _readCb;
 
+    //服务器关闭回调
     private Consumer<Socket> _closeCb;
 
-    private boolean _token;
+    //cancel token
+    private volatile boolean _token;
 
     public SimpleThreadServer(int port,BiConsumer<byte[],Socket> readCb,Consumer<Socket> closeCb) throws IOException
     {
@@ -33,9 +38,11 @@ public class SimpleThreadServer implements IServer{
 
     public void run() throws IOException
     {
+        //循环接受连接
         while(!_token)
         {
              Socket sock = _acceptor.accept();
+             //为每一个连接开启一个新的线程
              Thread thred = new Thread(()->
              {
                  try
@@ -61,6 +68,7 @@ public class SimpleThreadServer implements IServer{
     {
         while(!_token)
         {
+            //阻塞读取数据
             InputStream stream = sock.getInputStream();
             byte[] buf = new byte[8192];
             int r = stream.read(buf);

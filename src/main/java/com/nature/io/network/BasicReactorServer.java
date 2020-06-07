@@ -7,10 +7,14 @@ import java.nio.channels.SocketChannel;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
+//BasicReactor Server
+//Basic Reactor 模型
 public class BasicReactorServer implements IServer {
 
+    //Reactor
     private Reactor _reactor;
 
+    //Server Channel
     private ServerSocketChannel _serverSocketChannel;
 
     public BasicReactorServer(int port,Consumer<SocketChannel> closeCb,BiConsumer<byte[],SocketChannel> readCb) throws IOException

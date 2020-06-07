@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 
+//Acceptor
+//负责接受连接
 public class Acceptor {
     private ServerSocket _socket;
 
