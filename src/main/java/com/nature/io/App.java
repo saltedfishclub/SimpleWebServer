@@ -1,6 +1,5 @@
 package com.nature.io;
 
-import java.beans.Customizer;
 import java.io.IOException;
 import java.net.Socket;
 import java.nio.ByteBuffer;
@@ -121,16 +120,14 @@ public class App
         App app = new App();
         ServerThread thread = app.new ServerThread(server);
         thread.start();
-        System.out.println("please enter close to close server");
-        String str = scanner.nextLine();
-        if(str.equals("close"))
-        {
-            try {
-                server.close();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-            scanner.close();
+        ServerCloserThread closer = new ServerCloserThread(thread, server);
+        Runtime.getRuntime().addShutdownHook(closer);
+        System.out.println("please enter ctrl+c to close server");
+        try {
+            closer.join();
+        } 
+        catch (Exception e) {
+            e.printStackTrace();
         }
     }
 }

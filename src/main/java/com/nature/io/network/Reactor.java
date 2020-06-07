@@ -1,7 +1,6 @@
 package com.nature.io.network;
 
 import java.io.IOException;
-import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.nio.channels.ClosedChannelException;
 import java.nio.channels.SelectionKey;
@@ -34,20 +33,24 @@ public class Reactor {
         _acceptCb = acceptCb;
     }
 
+    //注册客户端连接
     public void register(SocketChannel channel) throws IOException
     {
         //设置为非阻塞
         channel.configureBlocking(false);
+        //将Channel注册到Selector
         //在生产环境中您应该同时监听write
         channel.register(_selector, SelectionKey.OP_READ);
     }
 
+    //注册服务器监听器
     public void register(ServerSocketChannel channel) throws IOException
     {
         channel.configureBlocking(false);
         channel.register(_selector,SelectionKey.OP_ACCEPT);
     }
 
+    //处理IO事件
     private void handleIoEvent(SelectionKey key) throws IOException
     {
         //可读事件
@@ -59,20 +62,29 @@ public class Reactor {
             try 
             {
                 int r = channel.read(buf);
-                _readCb.accept(buf.array(),channel);
+                if(r > 0)
+                {
+                    _readCb.accept(buf.array(),channel);
+                }
             } 
             catch (ClosedChannelException ex) 
             {
                 _closeCb.accept(channel);    
             }
         }
+        //客户端连接事件
         else if(key.isAcceptable())
         {
+            //获取ServerSocketChannel
             ServerSocketChannel channel = (ServerSocketChannel)key.channel();
+            //使用accept获取客户端
             SocketChannel client = channel.accept();
-            _acceptCb.accept(client);
+            //注册到Selector
             register(client);
+            //调用客户端连接回调
+            _acceptCb.accept(client);
         }
+        //客户端关闭事件
         else if(key.isValid())
         {
             SocketChannel channel = (SocketChannel)key.channel();
@@ -84,14 +96,18 @@ public class Reactor {
     {
         //获取发生的事件
         int num_ev = _selector.select();
+        //判断事件个数大于0
         if(num_ev > 0)
         {
+            //获取有事件的Channel
             Set<SelectionKey> keys = _selector.selectedKeys();
+            //遍历Channel
             Iterator<SelectionKey> iter = keys.iterator();
             while(iter.hasNext())
             {
                 SelectionKey key = iter.next();
                 iter.remove();
+                //处理IO事件
                 handleIoEvent(key);
             }
         }
