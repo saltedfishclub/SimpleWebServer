@@ -1,6 +1,6 @@
-package com.nature.io;
+package cc.sfclub.io;
 
-import com.nature.io.network.IServer;
+import cc.sfclub.io.network.IServer;
 
 public class ServerCloserThread extends Thread {
 

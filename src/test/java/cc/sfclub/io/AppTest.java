@@ -1,4 +1,4 @@
-package com.nature.io;
+package cc.sfclub.io;
 
 import junit.framework.Test;
 import junit.framework.TestCase;

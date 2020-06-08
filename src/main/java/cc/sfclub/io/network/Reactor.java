@@ -1,4 +1,4 @@
-package com.nature.io.network;
+package cc.sfclub.io.network;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -18,13 +18,13 @@ import javax.lang.model.util.ElementScanner6;
 //反应器
 public class Reactor {
     //selector
-    private Selector _selector;
+    private final Selector _selector;
     //数据到达回调
-    private BiConsumer<byte[],SocketChannel> _readCb;
+    private final BiConsumer<byte[],SocketChannel> _readCb;
     //客户端关闭回调
-    private Consumer<SocketChannel> _closeCb;
+    private final Consumer<SocketChannel> _closeCb;
     //客户端连接回调
-    private Consumer<SocketChannel> _acceptCb;
+    private final Consumer<SocketChannel> _acceptCb;
     //cancel token
     private volatile boolean _token;
 

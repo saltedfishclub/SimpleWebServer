@@ -1,4 +1,4 @@
-package com.nature.io.network;
+package cc.sfclub.io.network;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;

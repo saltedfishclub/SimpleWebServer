@@ -1,4 +1,4 @@
-package com.nature.io.network;
+package cc.sfclub.io.network;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -15,7 +15,7 @@ public class BasicReactorServer implements IServer {
     private Reactor _reactor;
 
     //Server Channel
-    private ServerSocketChannel _serverSocketChannel;
+    private final ServerSocketChannel _serverSocketChannel;
 
     public BasicReactorServer(int port,Consumer<SocketChannel> closeCb,BiConsumer<byte[],SocketChannel> readCb) throws IOException
     {

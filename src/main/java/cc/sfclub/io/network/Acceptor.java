@@ -1,4 +1,4 @@
-package com.nature.io.network;
+package cc.sfclub.io.network;
 
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -7,7 +7,7 @@ import java.net.Socket;
 //Acceptor
 //负责接受连接
 public class Acceptor {
-    private ServerSocket _socket;
+    private final ServerSocket _socket;
 
     public Acceptor(ServerSocket socket)
     {

@@ -1,4 +1,4 @@
-package com.nature.io.network;
+package cc.sfclub.io.network;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -15,13 +15,13 @@ import java.util.function.Consumer;
 public class ThreadPoolReactorServer implements IServer {
 
     //Server Channel
-    private ServerSocketChannel _serverSocketChannel;
+    private final ServerSocketChannel _serverSocketChannel;
 
     //反应器
     private Reactor _reactor;
 
     //线程池
-    private ExecutorService _excutor;
+    private final ExecutorService _excutor;
 
     public ThreadPoolReactorServer(int port,BiConsumer<byte[],SocketChannel> readCb,Consumer<SocketChannel> closeCb) throws IOException
     {

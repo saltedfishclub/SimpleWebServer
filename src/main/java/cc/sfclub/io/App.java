@@ -1,4 +1,4 @@
-package com.nature.io;
+package cc.sfclub.io;
 
 import java.io.IOException;
 import java.net.Socket;
@@ -8,7 +8,7 @@ import java.util.Scanner;
 import java.util.function.Consumer;
 import java.util.function.BiConsumer;
 
-import com.nature.io.network.*;
+import cc.sfclub.io.network.*;
 
 /**
  * Hello world!

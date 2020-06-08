@@ -1,4 +1,4 @@
-package com.nature.io.network;
+package cc.sfclub.io.network;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -13,16 +13,16 @@ import java.net.Socket;
 public class SimpleThreadServer implements IServer{
 
     //Server Socket
-    private ServerSocket _sock;
+    private final ServerSocket _sock;
 
     //Acceptor
-    private Acceptor _acceptor;
+    private final Acceptor _acceptor;
 
     //数据到达回调
-    private BiConsumer<byte[],Socket> _readCb;
+    private final BiConsumer<byte[],Socket> _readCb;
 
     //服务器关闭回调
-    private Consumer<Socket> _closeCb;
+    private final Consumer<Socket> _closeCb;
 
     //cancel token
     private volatile boolean _token;
