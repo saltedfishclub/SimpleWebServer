@@ -19,13 +19,13 @@ import cc.sfclub.io.SpinLock;
 //反应器
 public class Reactor {
     //selector
-    private final Selector _selector;
+    private Selector _selector;
     //数据到达回调
-    private final BiConsumer<byte[],SocketChannel> _readCb;
+    private BiConsumer<byte[],SocketChannel> _readCb;
     //客户端关闭回调
-    private final Consumer<SocketChannel> _closeCb;
+    private Consumer<SocketChannel> _closeCb;
     //客户端连接回调
-    private final Consumer<SocketChannel> _acceptCb;
+    private Consumer<SocketChannel> _acceptCb;
     //cancel token
     private volatile boolean _token;
     //tasks
@@ -72,22 +72,30 @@ public class Reactor {
         return tasks;
     }
 
-    private void handleTasks()
+    private boolean handleTasks()
     {
         LinkedList<Runnable> tasks = getTasks();
         for(Runnable task:tasks)
         {
             task.run();
         }
+        return tasks.size() != 0;
     }
 
+    //JVM bug:
+    //https://bugs.java.com/bugdatabase/view_bug.do?bug_id=2147719
+    //https://bugs.java.com/bugdatabase/view_bug.do?bug_id=6403933
     private void rebuildSelector() throws IOException
     {
         Selector selector = Selector.open();
         for(SelectionKey key:_selector.keys())
         {
-            selector.keys().add(key);
+            key.channel().register(selector,key.interestOps());
+            key.cancel();
         }
+        Selector tmp = _selector;
+        _selector = selector;
+        tmp.close();
     }
 
     //注册客户端连接
@@ -197,7 +205,11 @@ public class Reactor {
                 handleIoEvent(key);
             }
         }
-        handleTasks();
+        boolean r = handleTasks();
+        if(!r && num_ev == 0 && !_token)
+        {
+            rebuildSelector();
+        }
     }
 
     public void run() throws IOException

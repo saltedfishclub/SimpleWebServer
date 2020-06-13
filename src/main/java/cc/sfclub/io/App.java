@@ -65,7 +65,7 @@ public class App
         System.out.println("1)Multithread Model Server - one connection per thread");
         System.out.println("2)Reactor Model Server - basic reactor");
         System.out.println("3)Reactor Model Server With Thread Pool - reactor + thread pool");
-        System.out.println("4)MultiReactor Model Server(未完成) - one loop per thread");
+        System.out.println("4)MultiReactor Model Server - one loop per thread");
         int model = scanner.nextInt();
         scanner.close();
         IServer server = null;
