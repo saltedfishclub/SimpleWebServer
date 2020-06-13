@@ -7,7 +7,7 @@ import java.net.Socket;
 //Acceptor
 //负责接受连接
 public class Acceptor {
-    private final ServerSocket _socket;
+    private ServerSocket _socket;
 
     public Acceptor(ServerSocket socket)
     {
