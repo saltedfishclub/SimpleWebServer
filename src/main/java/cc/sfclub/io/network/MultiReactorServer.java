@@ -21,30 +21,40 @@ public class MultiReactorServer implements IServer {
     private List<Reactor> _reactors;
 
     //指派位置
+    //用于轮询调度
     private AtomicInteger _dispath_pos;
 
+    //ServerChannel
     private ServerSocketChannel _serverSocketChannel;
 
+    //运行Reactor的线程池
     private ExecutorService _threadPool;
 
     public MultiReactorServer(int port,int num_reactors,BiConsumer<byte[],SocketChannel> readCb,Consumer<SocketChannel> closeCb) throws IOException
     {
+        //num_reactors必须大于或等于1
         if(num_reactors < 1)
         {
             return;
         }
+        //新建ServerChannel并监听指定端口
         _serverSocketChannel = ServerSocketChannel.open();
         _serverSocketChannel.bind(new InetSocketAddress(port));
-        _dispath_pos = new AtomicInteger();
-        _dispath_pos.set(0);
+        //初始化指派位置
+        _dispath_pos = new AtomicInteger(0);
+        //初始化Reactor列表
         _reactors = new ArrayList<>();
+        //批量创建Reactor
         for(int i = 0;i < num_reactors;i++)
         {
             _reactors.add(new Reactor(readCb, closeCb,(sock)->
             {
+                //原子性地递增指派位置并返回它原来的值
                 int pos = _dispath_pos.getAndIncrement();
+                //对size求模获取Reactor
                 pos = pos %_reactors.size();
                 Reactor reactor = _reactors.get(pos);
+                //将channel指派给指定的Reactor
                 try {
                     reactor.register(sock);
                 } catch (Exception e) {
@@ -52,13 +62,18 @@ public class MultiReactorServer implements IServer {
                 }
             }));
         }
+        //第一个Reactor总是用来监听ServerChannel
         _reactors.get(0).register(_serverSocketChannel);
+        //大于1则需要创建线程池
         if(num_reactors > 1)
         {
             _threadPool = Executors.newFixedThreadPool(_reactors.size()-1);
         }
     }
 
+    //运行服务器
+    //mainReactor总是由调用run的线程运行
+    //其他Reactor则是由线程池运行
     @Override
     public void run() throws IOException {
         Reactor mainReactor = _reactors.get(0);
@@ -85,6 +100,7 @@ public class MultiReactorServer implements IServer {
 
     @Override
     public void close() throws IOException {
+        //遍历关闭Reactor
         for ( Reactor r : _reactors) {
             r.stop();
         }

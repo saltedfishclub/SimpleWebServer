@@ -15,21 +15,29 @@ public class BasicReactorServer implements IServer {
     private Reactor _reactor;
 
     //Server Channel
-    private final ServerSocketChannel _serverSocketChannel;
+    private ServerSocketChannel _serverSocketChannel;
 
     public BasicReactorServer(int port,Consumer<SocketChannel> closeCb,BiConsumer<byte[],SocketChannel> readCb) throws IOException
     {
+        //新建ServerChannel
+        //并绑定到指定的端口
         _serverSocketChannel = ServerSocketChannel.open();
         _serverSocketChannel.bind(new InetSocketAddress(port));
+        //新建Ractor
         _reactor = new Reactor(readCb, closeCb,(channel)->
         {
+            /**
+             * 新连接回调
+             */
             try {
+                //将SocketChannel注册到Reactor
                 _reactor.register(channel);
             } 
             catch (Exception e) {
                 e.printStackTrace();
             }
         });
+        //将ServerChannel注册到Reactor
         _reactor.register(_serverSocketChannel);
     }
 
