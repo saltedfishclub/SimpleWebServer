@@ -37,7 +37,7 @@ public class MultiReactorServer implements IServer {
         {
             return;
         }
-        //新建ServerChannel并监听指定端口
+        //新建ServerSocketChannel并监听指定端口
         _serverSocketChannel = ServerSocketChannel.open();
         _serverSocketChannel.bind(new InetSocketAddress(port));
         //初始化指派位置
@@ -79,6 +79,7 @@ public class MultiReactorServer implements IServer {
         Reactor mainReactor = _reactors.get(0);
         if(_reactors.size() > 1)
         {
+            //将Reactor分配给线程池
             for(int i = 1;i < _reactors.size();++i)
             {
                 final int index = i;

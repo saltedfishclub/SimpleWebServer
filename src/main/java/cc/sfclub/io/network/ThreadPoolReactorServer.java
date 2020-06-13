@@ -15,22 +15,26 @@ import java.util.function.Consumer;
 public class ThreadPoolReactorServer implements IServer {
 
     //Server Channel
-    private final ServerSocketChannel _serverSocketChannel;
+    private ServerSocketChannel _serverSocketChannel;
 
     //反应器
     private Reactor _reactor;
 
     //线程池
-    private final ExecutorService _excutor;
+    private ExecutorService _excutor;
 
     public ThreadPoolReactorServer(int port,BiConsumer<byte[],SocketChannel> readCb,Consumer<SocketChannel> closeCb) throws IOException
     {
+        //新建ServerSocketChannel并监听指定端口
         _serverSocketChannel = ServerSocketChannel.open();
         _serverSocketChannel.bind(new InetSocketAddress(port));
         //使用固定大小的线程池
         _excutor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
         _reactor = new Reactor((buf,sock)->
         {
+            /**
+             * 数据到达回调
+             */
             //放入线程池中执行
             _excutor.submit(()->
             {
@@ -38,12 +42,18 @@ public class ThreadPoolReactorServer implements IServer {
             });
         }, (sock)->
         {
+            /**
+             * 客户端断开回调
+             */
             //放入线程池中执行
             _excutor.submit(()->
             {
                 closeCb.accept(sock);
             });
         },(sock)->{
+            /**
+             * 新连接回调
+             */
             try {
                 _reactor.register(sock);
             } 

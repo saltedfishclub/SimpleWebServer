@@ -13,26 +13,28 @@ import java.net.Socket;
 public class SimpleThreadServer implements IServer{
 
     //Server Socket
-    private final ServerSocket _sock;
+    private ServerSocket _sock;
 
     //Acceptor
-    private final Acceptor _acceptor;
+    private Acceptor _acceptor;
 
     //数据到达回调
-    private final BiConsumer<byte[],Socket> _readCb;
+    private BiConsumer<byte[],Socket> _readCb;
 
     //服务器关闭回调
-    private final Consumer<Socket> _closeCb;
+    private Consumer<Socket> _closeCb;
 
     //cancel token
     private volatile boolean _token;
 
     public SimpleThreadServer(int port,BiConsumer<byte[],Socket> readCb,Consumer<Socket> closeCb) throws IOException
     {
+        //新建ServerSocket并监听指定端口
         _sock = new ServerSocket(port);
         _readCb = readCb;
         _closeCb = closeCb;
         _token = false;
+        //Acceptor用于接受连接
         _acceptor = new Acceptor(_sock);
     }
 
@@ -47,6 +49,7 @@ public class SimpleThreadServer implements IServer{
              {
                  try
                  {
+                     //处理Socket
                     handleSocket(sock);
                  }
                  catch(IOException err)
@@ -58,6 +61,7 @@ public class SimpleThreadServer implements IServer{
         }
     }
 
+    //关闭监听
     public void close() throws IOException
     {
         _token = true;

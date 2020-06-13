@@ -19,8 +19,8 @@ public class BasicReactorServer implements IServer {
 
     public BasicReactorServer(int port,Consumer<SocketChannel> closeCb,BiConsumer<byte[],SocketChannel> readCb) throws IOException
     {
-        //新建ServerChannel
-        //并绑定到指定的端口
+        //新建ServerSocketChannel
+        //并监听指定的端口
         _serverSocketChannel = ServerSocketChannel.open();
         _serverSocketChannel.bind(new InetSocketAddress(port));
         //新建Ractor
