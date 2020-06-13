@@ -15,12 +15,14 @@ public class App
     //数据到达回调
     private static void on_read(final byte[] data, final Socket sock) throws IOException 
     {
+        //发送HTTP请求后关闭socket
         sock.getOutputStream().write("HTTP/1.0 200 OK\r\nContent-Length: 11\r\n\r\nHello World".getBytes());
         sock.close();
     }
 
     private static void on_read(final byte[] data, final SocketChannel sock) throws IOException 
     {
+        //发送HTTP请求后关闭socket
         ByteBuffer buf = ByteBuffer.wrap("HTTP/1.0 200 OK\r\nContent-Length: 11\r\n\r\nHello World".getBytes());
         sock.write(buf);
         sock.close();
