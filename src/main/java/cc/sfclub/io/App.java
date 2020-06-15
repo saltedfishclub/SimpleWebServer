@@ -8,19 +8,23 @@ import java.util.Scanner;
 import java.util.function.Consumer;
 import java.util.function.BiConsumer;
 
-import cc.sfclub.io.network.*;
+import cc.sfclub.io.network.IServer;
+import cc.sfclub.io.network.BasicReactorServer;
+import cc.sfclub.io.network.ThreadPoolReactorServer;
+import cc.sfclub.io.network.MultiReactorServer;
+import cc.sfclub.io.network.SimpleThreadServer;
 
 public class App 
 {
     //数据到达回调
-    private static void on_read(final byte[] data, final Socket sock) throws IOException 
+    private static void onRead(final byte[] data, final Socket sock) throws IOException 
     {
         //发送HTTP请求后关闭socket
         sock.getOutputStream().write("HTTP/1.0 200 OK\r\nContent-Length: 11\r\n\r\nHello World".getBytes());
         sock.close();
     }
 
-    private static void on_read(final byte[] data, final SocketChannel sock) throws IOException 
+    private static void onRead(final byte[] data, final SocketChannel sock) throws IOException 
     {
         //发送HTTP请求后关闭socket
         ByteBuffer buf = ByteBuffer.wrap("HTTP/1.0 200 OK\r\nContent-Length: 11\r\n\r\nHello World".getBytes());
@@ -29,13 +33,13 @@ public class App
     }
 
     //客户端断开回调
-    private static void on_close(final Socket sock) throws IOException 
+    private static void onClose(final Socket sock) throws IOException 
     {
         System.out.println(sock.getInetAddress().toString()+" close");
         sock.close();
     }
 
-    private static void on_close(final SocketChannel sock) throws IOException 
+    private static void onClose(final SocketChannel sock) throws IOException 
     {
         System.out.println(sock.socket().getInetAddress().toString()+" close");
         sock.close();
@@ -43,7 +47,7 @@ public class App
 
     //服务器线程
     public class ServerThread  extends Thread {
-        IServer _server;
+        private IServer _server;
 
         public ServerThread(IServer server)
         {
@@ -81,7 +85,7 @@ public class App
         //NIO 客户端断开回调
         Consumer<SocketChannel> br_closeCb = (sock) -> {
             try {
-                on_close(sock);
+                onClose(sock);
             } 
             catch (final Exception e) {
                 // 在生产环境中您应该做异常处理
@@ -91,7 +95,7 @@ public class App
         //NIO 数据到达回调
         BiConsumer<byte[], SocketChannel> br_readCb = (buf, sock) -> {
             try {
-                on_read(buf, sock);
+                onRead(buf, sock);
             } 
             catch (final Exception e) {
                 e.printStackTrace();
@@ -105,7 +109,7 @@ public class App
                     //BIO 客户端断开回调
                     Consumer<Socket> closeCb = (sock) -> {
                         try {
-                             on_close(sock);
+                             onClose(sock);
                         } 
                         catch (final Exception e) {
                             // 在生产环境中您应该做异常处理
@@ -115,7 +119,7 @@ public class App
                     //BIO 数据到达回调
                     BiConsumer<byte[], Socket> readCb = (buf, sock) -> {
                         try {
-                          on_read(buf, sock);
+                          onRead(buf, sock);
                         } 
                         catch (final Exception e) {
                          e.printStackTrace();

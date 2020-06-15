@@ -69,7 +69,8 @@ public class Reactor {
     private LinkedList<Runnable> getTasks()
     {
         //交换taks和_tasks
-        LinkedList<Runnable> tasks = new LinkedList<>(),tmp = tasks;
+        LinkedList<Runnable> tasks = new LinkedList<>();
+        LinkedList<Runnable> tmp = tasks;
         _lock.lock();
         try {
             tasks = _tasks;
@@ -222,7 +223,7 @@ public class Reactor {
     }
 
     //获取并处理事件
-    private void run_once() throws IOException
+    private void runOnce() throws IOException
     {
         //获取发生的事件
         int num_ev = _selector.select();
@@ -257,7 +258,7 @@ public class Reactor {
     {
         while(!_token)
         {
-            run_once();
+            runOnce();
         }
     }
 

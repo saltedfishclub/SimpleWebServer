@@ -6,10 +6,10 @@ import cc.sfclub.io.network.IServer;
 public class ServerCloserThread extends Thread {
 
     //服务器线程
-    Thread _thread;
+    private Thread _thread;
 
     //需要关闭的服务器
-    IServer _server;
+    private IServer _server;
 
     public ServerCloserThread(Thread thread,IServer server)
     {
