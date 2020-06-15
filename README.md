@@ -1,4 +1,7 @@
 # SimpleWebServer
+
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/aa8578729e3648df8198ea888206a7cd)](https://app.codacy.com/manual/NaturalSelect/SimpleWebServer?utm_source=github.com&utm_medium=referral&utm_content=NaturalSelect/SimpleWebServer&utm_campaign=Badge_Grade_Dashboard)
+
 一个简单的基于Java NIO的短连接 Web Server  
 提供四种常见服务器并发模型
 ## 模型列表
