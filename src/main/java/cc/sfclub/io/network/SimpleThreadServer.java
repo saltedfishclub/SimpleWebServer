@@ -12,8 +12,6 @@ import java.net.Socket;
 //使用 one connection per thread 模型
 public class SimpleThreadServer implements IServer{
 
-    //Server Socket
-    private ServerSocket _sock;
 
     //Acceptor
     private Acceptor _acceptor;
@@ -30,12 +28,12 @@ public class SimpleThreadServer implements IServer{
     public SimpleThreadServer(int port,BiConsumer<byte[],Socket> readCb,Consumer<Socket> closeCb) throws IOException
     {
         //新建ServerSocket并监听指定端口
-        _sock = new ServerSocket(port);
+        ServerSocket sock = new ServerSocket(port);
         _readCb = readCb;
         _closeCb = closeCb;
         _token = false;
         //Acceptor用于接受连接
-        _acceptor = new Acceptor(_sock);
+        _acceptor = new Acceptor(sock);
     }
 
     public void run() throws IOException

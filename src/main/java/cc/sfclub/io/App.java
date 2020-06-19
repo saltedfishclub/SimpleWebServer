@@ -17,14 +17,14 @@ import cc.sfclub.io.network.SimpleThreadServer;
 public class App 
 {
     //数据到达回调
-    private static void onRead(final byte[] data, final Socket sock) throws IOException 
+    private static void onRead(byte[] data, Socket sock) throws IOException 
     {
         //发送HTTP请求后关闭socket
         sock.getOutputStream().write("HTTP/1.0 200 OK\r\nContent-Length: 11\r\n\r\nHello World".getBytes());
         sock.close();
     }
 
-    private static void onRead(final byte[] data, final SocketChannel sock) throws IOException 
+    private static void onRead(byte[] data, SocketChannel sock) throws IOException 
     {
         //发送HTTP请求后关闭socket
         ByteBuffer buf = ByteBuffer.wrap("HTTP/1.0 200 OK\r\nContent-Length: 11\r\n\r\nHello World".getBytes());
@@ -33,13 +33,13 @@ public class App
     }
 
     //客户端断开回调
-    private static void onClose(final Socket sock) throws IOException 
+    private static void onClose(Socket sock) throws IOException 
     {
         System.out.println(sock.getInetAddress().toString()+" close");
         sock.close();
     }
 
-    private static void onClose(final SocketChannel sock) throws IOException 
+    private static void onClose(SocketChannel sock) throws IOException 
     {
         System.out.println(sock.socket().getInetAddress().toString()+" close");
         sock.close();
