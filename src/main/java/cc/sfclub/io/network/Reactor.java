@@ -268,4 +268,14 @@ public class Reactor {
         _token = true;
         _selector.close();
     }
+
+    public void enableWrite(SocketChannel channel)
+    {
+        
+    }
+
+    public void disableWrite(SocketChannel channel)
+    {
+
+    }
 }

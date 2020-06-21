@@ -17,7 +17,7 @@ public class SpinLock {
     public void lock() 
     {
         //while 直到有线程释放锁并原子性地获得锁
-        while(_locked.compareAndExchange(false, true))
+        while(!_locked.compareAndExchange(false, true))
         {
             Thread.yield();
         }    

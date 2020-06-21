@@ -45,27 +45,6 @@ public class App
         sock.close();
     }
 
-    //服务器线程
-    public class ServerThread  extends Thread {
-        private IServer _server;
-
-        public ServerThread(IServer server)
-        {
-            super();
-            _server = server;
-        }
-        
-        @Override
-        public void run()
-        {
-            try {
-                _server.run();
-            } catch (final Exception e) {
-                e.printStackTrace();
-            }
-        }
-    }
-
     public static void main(final String[] args) 
     {
         Scanner scanner = new Scanner(System.in);
@@ -153,8 +132,7 @@ public class App
             return;
         }
         //创建服务器线程
-        App app = new App();
-        ServerThread thread = app.new ServerThread(server);
+        ServerThread thread = new ServerThread(server);
         //启动服务器线程
         thread.start();
         //创建Closer线程
