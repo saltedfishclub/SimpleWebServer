@@ -106,5 +106,8 @@ public class MultiReactorServer implements IServer {
             r.stop();
         }
         _serverSocketChannel.close();
+        if(_threadPool != null) {
+            _threadPool.shutdown();
+        }
     }
 }
