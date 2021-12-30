@@ -15,28 +15,28 @@ import java.util.function.Consumer;
 public class ThreadPoolReactorServer implements IServer {
 
     //Server Channel
-    private ServerSocketChannel _serverSocketChannel;
+    private ServerSocketChannel serverSocketChannel_;
 
     //反应器
-    private Reactor _reactor;
+    private Reactor reactor_;
 
     //线程池
-    private ExecutorService _excutor;
+    private ExecutorService threadPool_;
 
     public ThreadPoolReactorServer(int port,BiConsumer<byte[],SocketChannel> readCb,Consumer<SocketChannel> closeCb) throws IOException
     {
         //新建ServerSocketChannel并监听指定端口
-        _serverSocketChannel = ServerSocketChannel.open();
-        _serverSocketChannel.bind(new InetSocketAddress(port));
+        serverSocketChannel_ = ServerSocketChannel.open();
+        serverSocketChannel_.bind(new InetSocketAddress(port));
         //使用固定大小的线程池
-        _excutor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
-        _reactor = new Reactor((buf,sock)->
+        threadPool_ = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+        reactor_ = new Reactor((buf,sock)->
         {
             /**
              * 数据到达回调
              */
             //放入线程池中执行
-            _excutor.submit(()->
+            threadPool_.submit(()->
             {
                 readCb.accept(buf, sock);
             });
@@ -46,7 +46,7 @@ public class ThreadPoolReactorServer implements IServer {
              * 客户端断开回调
              */
             //放入线程池中执行
-            _excutor.submit(()->
+            threadPool_.submit(()->
             {
                 closeCb.accept(sock);
             });
@@ -55,24 +55,24 @@ public class ThreadPoolReactorServer implements IServer {
              * 新连接回调
              */
             try {
-                _reactor.register(sock);
+                reactor_.register(sock);
             } 
             catch (Exception e) {
                 e.printStackTrace();
             }
         });
-        _reactor.register(_serverSocketChannel);
+        reactor_.register(serverSocketChannel_);
     }
 
     @Override
     public void run() throws IOException {
-        _reactor.run();
+        reactor_.run();
     }
 
     @Override
     public void close() throws IOException {
-        _reactor.stop();
-        _serverSocketChannel.close();
+        reactor_.stop();
+        serverSocketChannel_.close();
     }
     
 }

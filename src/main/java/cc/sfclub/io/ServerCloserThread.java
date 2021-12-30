@@ -6,15 +6,15 @@ import cc.sfclub.io.network.IServer;
 public class ServerCloserThread extends Thread {
 
     //服务器线程
-    private Thread _thread;
+    private Thread thread_;
 
     //需要关闭的服务器
-    private IServer _server;
+    private IServer server_;
 
     public ServerCloserThread(Thread thread,IServer server)
     {
-        _thread = thread;
-        _server = server;
+        thread_ = thread;
+        server_ = server;
     }
 
     @Override
@@ -23,9 +23,9 @@ public class ServerCloserThread extends Thread {
         System.out.println("Server Closing");
         try {
             //关闭服务器
-            _server.close();
+            server_.close();
             //等待服务器线程结束
-            _thread.join();
+            thread_.join();
             System.out.println("Server Closed");
         } catch (Exception e) {
             e.printStackTrace();

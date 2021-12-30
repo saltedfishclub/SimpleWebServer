@@ -7,20 +7,20 @@ import java.net.Socket;
 //Acceptor
 //负责接受连接
 public class Acceptor {
-    private ServerSocket _socket;
+    private ServerSocket socket_;
 
     public Acceptor(ServerSocket socket)
     {
-        _socket = socket;
+        socket_ = socket;
     }
 
     public Socket accept() throws IOException
     {
-        return _socket.accept();
+        return socket_.accept();
     }
 
     public void close() throws IOException
     {
-        _socket.close();
+        socket_.close();
     }
 }

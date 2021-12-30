@@ -3,19 +3,19 @@ package cc.sfclub.io;
 import cc.sfclub.io.network.IServer;
 
 public class ServerThread extends Thread {
-    private IServer _server;
+    private IServer server_;
 
     public ServerThread(IServer server)
     {
         super();
-        _server = server;
+        server_ = server;
     }
     
     @Override
     public void run()
     {
         try {
-            _server.run();
+            server_.run();
         } catch (final Exception e) {
             e.printStackTrace();
         }

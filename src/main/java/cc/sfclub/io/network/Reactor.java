@@ -21,64 +21,88 @@ import cc.sfclub.io.SpinLock;
 //run方法将会导致线程阻塞直到反应器关闭
 //注意: 在客户端连接回调中将SocketChannel注册到Reactor是用户的责任
 public class Reactor {
+
     //selector
-    private Selector _selector;
+    //事件收集器,用于收集发生在channel上的事件
+    //channel需要注册到selector才能被收集
+    private Selector selector_;
+
+    //回调由外部传入,负责与业务逻辑对接
+
     //数据到达回调
-    private BiConsumer<byte[],SocketChannel> _readCb;
+    //当客户端数据到达服务器时调用
+    private BiConsumer<byte[],SocketChannel> readCb_;
+
     //客户端关闭回调
-    private Consumer<SocketChannel> _closeCb;
+    //当客户端关闭连接时调用
+    private Consumer<SocketChannel> closeCb_;
+
     //客户端连接回调
-    private Consumer<SocketChannel> _acceptCb;
+    //当客户端连接到服务器时调用
+    private Consumer<SocketChannel> acceptCb_;
+
     //cancel token
-    private volatile boolean _token;
+    //运行被取消时为true
+    //必须为volatile
+    private volatile boolean token_;
+
     //tasks
-    private LinkedList<Runnable> _tasks;
+    //单线程任务列表
+    //可以让其他线程将任务推送给reactor执行
+    private LinkedList<Runnable> tasks_;
 
     //自旋锁
-    //用于保护_tasks
-    private SpinLock _lock;
+    //用于保护tasks
+    private SpinLock lock_;
 
     public Reactor(BiConsumer<byte[],SocketChannel> readCb,Consumer<SocketChannel> closeCb,Consumer<SocketChannel> acceptCb) throws IOException
     {
-        _selector = Selector.open();
-        _readCb = readCb;
-        _closeCb = closeCb;
-        _token = false;
-        _acceptCb = acceptCb;
-        _tasks = new LinkedList<>();
-        _lock = new SpinLock();
+        //使用Selector.Open()创建Selector的实例
+        selector_ = Selector.open();
+        //注册回调
+        readCb_ = readCb;
+        closeCb_ = closeCb;
+        token_ = false;
+        acceptCb_ = acceptCb;
+        //初始化任务列表
+        tasks_ = new LinkedList<>();
+        lock_ = new SpinLock();
     }
 
     //用于其他线程向Reactor线程投递任务
     private void runInLoop(Runnable task)
     {
+        //这里有一个优化点,可以想办法减少唤醒次数
+        //因为唤醒十分耗时
+
         //将任务放到_tasks里
-        _lock.lock();
+        lock_.lock();
         try {
-            _tasks.add(task);
+            tasks_.add(task);
         } 
         finally
         {
-            _lock.unlock();
+            lock_.unlock();
         }
         //唤醒Reactor线程
-        _selector.wakeup();
+        selector_.wakeup();
     }
 
     //获取其他线程投递的任务
     private LinkedList<Runnable> getTasks()
     {
         //交换taks和_tasks
+        //为什么要这样？防止执行任务时长时间持有锁
         LinkedList<Runnable> tasks = new LinkedList<>();
         LinkedList<Runnable> tmp = tasks;
-        _lock.lock();
+        lock_.lock();
         try {
-            tasks = _tasks;
-            _tasks = tmp;
+            tasks = tasks_;
+            tasks_ = tmp;
         } 
         finally
         {
-            _lock.unlock();
+            lock_.unlock();
         }
         return tasks;
     }
@@ -105,14 +129,14 @@ public class Reactor {
         //创建新selector
         Selector selector = Selector.open();
         //将原来selector的key移动到新建的selector上
-        for(SelectionKey key:_selector.keys())
+        for(SelectionKey key:selector_.keys())
         {
             key.channel().register(selector,key.interestOps());
             key.cancel();
         }
         //交换两个selector
-        Selector tmp = _selector;
-        _selector = selector;
+        Selector tmp = selector_;
+        selector_ = selector;
         //关闭旧的selector
         tmp.close();
     }
@@ -135,7 +159,7 @@ public class Reactor {
                  //在有数据需要写时监听OP_WRITE
                  //无数据需写入时必须将OP_WRITE移除
                  //否则将导致忙循环
-                channel.register(_selector, SelectionKey.OP_READ);
+                channel.register(selector_, SelectionKey.OP_READ);
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -152,7 +176,7 @@ public class Reactor {
                 //设置为非阻塞
                 channel.configureBlocking(false);
                 //将Channel注册到Selector
-                channel.register(_selector, SelectionKey.OP_ACCEPT);
+                channel.register(selector_, SelectionKey.OP_ACCEPT);
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -172,6 +196,7 @@ public class Reactor {
                 SocketChannel channel = (SocketChannel) key.channel();
                 //4096是系统Socket读缓冲区的大小
                 //这意味着您一次最多读取4096字节
+                //你可以通过设置改变这个大小
                 ByteBuffer buf = ByteBuffer.allocate(4096);
                 try 
                 {
@@ -181,20 +206,20 @@ public class Reactor {
                     if(r > 0)
                     {
                         //调用数据到达回调
-                        _readCb.accept(buf.array(),channel);
+                        readCb_.accept(buf.array(),channel);
                     }
                     else
                     {
                         //对端关闭了
                         //调用客户端断开回调
-                        _closeCb.accept(channel);
+                        closeCb_.accept(channel);
                     }
                 }    
                 catch (ClosedChannelException ex) 
                 {
                     //对端关闭了
                     //调用客户端断开回调
-                    _closeCb.accept(channel);    
+                    closeCb_.accept(channel);    
                 }
             }
             //客户端连接事件
@@ -206,7 +231,7 @@ public class Reactor {
                 SocketChannel client = channel.accept();
                 //调用客户端连接回调
                 //注意: 在回调中注册到Reactor是用户的责任
-                _acceptCb.accept(client);
+                acceptCb_.accept(client);
             }
             //可能是客户端关闭
             else
@@ -216,7 +241,7 @@ public class Reactor {
                 if(ch instanceof SocketChannel)
                 {
                     SocketChannel channel = (SocketChannel)ch;
-                    _closeCb.accept(channel);
+                    closeCb_.accept(channel);
                 }
             }
         }
@@ -225,13 +250,14 @@ public class Reactor {
     //获取并处理事件
     private void runOnce() throws IOException
     {
+        //这里是事件循环的主体逻辑
         //获取发生的事件
-        int num_ev = _selector.select();
+        int num_ev = selector_.select();
         //判断事件个数大于0
         if(num_ev > 0)
         {
             //获取有事件的Channel
-            Set<SelectionKey> keys = _selector.selectedKeys();
+            Set<SelectionKey> keys = selector_.selectedKeys();
             //遍历Channel
             Iterator<SelectionKey> iter = keys.iterator();
             while(iter.hasNext())
@@ -242,12 +268,13 @@ public class Reactor {
                 handleIoEvent(key);
             }
         }
+        //处理单线程任务
         boolean r = handleTasks();
         //如果发生的事件为0
         //且handleTasks返回false
         //则可能发生了空轮询bug
         //也可能是其他线程调用了close方法来关闭了selector
-        if(!r && num_ev == 0 && !_token)
+        if(!r && num_ev == 0 && !token_)
         {
             rebuildSelector();
         }
@@ -256,7 +283,7 @@ public class Reactor {
     //运行直到Reactor关闭
     public void run() throws IOException
     {
-        while(!_token)
+        while(!token_)
         {
             runOnce();
         }
@@ -265,17 +292,21 @@ public class Reactor {
     //关闭Reactor
     public void stop() throws IOException
     {
-        _token = true;
-        _selector.close();
+        token_ = true;
+        selector_.close();
     }
+
+    //非阻塞写
 
     public void enableWrite(SocketChannel channel)
     {
-        
+        //您应该自己实现这里
+        //添加对某channel的可写监听
     }
 
     public void disableWrite(SocketChannel channel)
     {
-
+        //您应该自己实现这里
+        //移除对某channel的可写监听
     }
 }

@@ -12,43 +12,43 @@ import java.util.function.Consumer;
 public class BasicReactorServer implements IServer {
 
     //Reactor
-    private Reactor _reactor;
+    private Reactor reactor_;
 
     //Server Channel
-    private ServerSocketChannel _serverSocketChannel;
+    private ServerSocketChannel serverSocketChannel_;
 
     public BasicReactorServer(int port,Consumer<SocketChannel> closeCb,BiConsumer<byte[],SocketChannel> readCb) throws IOException
     {
         //新建ServerSocketChannel
         //并监听指定的端口
-        _serverSocketChannel = ServerSocketChannel.open();
-        _serverSocketChannel.bind(new InetSocketAddress(port));
+        serverSocketChannel_ = ServerSocketChannel.open();
+        serverSocketChannel_.bind(new InetSocketAddress(port));
         //新建Ractor
-        _reactor = new Reactor(readCb, closeCb,(channel)->
+        reactor_ = new Reactor(readCb, closeCb,(channel)->
         {
-            /**
-             * 新连接回调
-             */
+            /*
+            * 新连接回调
+            */
             try {
                 //将SocketChannel注册到Reactor
-                _reactor.register(channel);
+                reactor_.register(channel);
             } 
             catch (Exception e) {
                 e.printStackTrace();
             }
         });
         //将ServerChannel注册到Reactor
-        _reactor.register(_serverSocketChannel);
+        reactor_.register(serverSocketChannel_);
     }
 
     @Override
     public void run() throws IOException {
-        _reactor.run();
+        reactor_.run();
     }
 
     @Override
     public void close() throws IOException {
-        _reactor.stop();
-        _serverSocketChannel.close();
+        reactor_.stop();
+        serverSocketChannel_.close();
     }
 }
