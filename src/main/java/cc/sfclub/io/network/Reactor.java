@@ -185,6 +185,8 @@ public class Reactor {
                 // 4096是系统Socket读缓冲区的大小
                 // 这意味着您一次最多读取4096字节
                 // 你可以通过设置改变这个大小
+                // 在实践中,推荐您只进行一次分配，并在此后继续使用同一个缓冲区
+                // 并且您应该使用ByteBuffer.allocateDirect而非allocate
                 ByteBuffer buf = ByteBuffer.allocate(4096);
                 try {
                     // 可能在读的过程中对端关闭
@@ -209,6 +211,9 @@ public class Reactor {
                 // 获取ServerSocketChannel
                 ServerSocketChannel channel = (ServerSocketChannel) event.channel();
                 // 使用accept获取客户端
+                // 设置channel为非阻塞的原因之一
+                // 是可能意外地发生阻塞,例如客户端连接到一半崩溃了
+                // channel就会在这里阻塞使循环无法继续
                 SocketChannel client = channel.accept();
                 // 调用客户端连接回调
                 // 注意: 在回调中注册到Reactor是用户的责任
