@@ -174,13 +174,14 @@ public class Reactor {
     }
 
     // 处理IO事件
-    private void handleIoEvent(SelectionKey key) throws IOException {
-        // 必须先判断key是否有效
+    private void handleIoEvent(SelectionKey event) throws IOException {
+        // 必须先判断event是否有效
         // 在处理之前它可能被取消
-        if (key.isValid()) {
+        if (event.isValid()) {
             // 可读事件
-            if (key.isReadable()) {
-                SocketChannel channel = (SocketChannel) key.channel();
+            if (event.isReadable()) {
+                // 获取发生事件的channel
+                SocketChannel channel = (SocketChannel) event.channel();
                 // 4096是系统Socket读缓冲区的大小
                 // 这意味着您一次最多读取4096字节
                 // 你可以通过设置改变这个大小
@@ -204,9 +205,9 @@ public class Reactor {
                 }
             }
             // 客户端连接事件
-            else if (key.isAcceptable()) {
+            else if (event.isAcceptable()) {
                 // 获取ServerSocketChannel
-                ServerSocketChannel channel = (ServerSocketChannel) key.channel();
+                ServerSocketChannel channel = (ServerSocketChannel) event.channel();
                 // 使用accept获取客户端
                 SocketChannel client = channel.accept();
                 // 调用客户端连接回调
@@ -215,7 +216,7 @@ public class Reactor {
             }
             // 可能是客户端关闭
             else {
-                Channel ch = key.channel();
+                Channel ch = event.channel();
                 // 客户端关闭
                 if (ch instanceof SocketChannel) {
                     SocketChannel channel = (SocketChannel) ch;
@@ -229,18 +230,20 @@ public class Reactor {
     private void runOnce() throws IOException {
         // 这里是事件循环的主体逻辑
         // 获取发生的事件
-        int num_ev = selector_.select();
+        int numOfEvent = selector_.select();
         // 判断事件个数大于0
-        if (num_ev > 0) {
-            // 获取有事件的Channel
-            Set<SelectionKey> keys = selector_.selectedKeys();
-            // 遍历Channel
-            Iterator<SelectionKey> iter = keys.iterator();
+        if (numOfEvent > 0) {
+            // 获取发生的所有事件
+            Set<SelectionKey> events = selector_.selectedKeys();
+            // 遍历事件集
+            Iterator<SelectionKey> iter = events.iterator();
             while (iter.hasNext()) {
-                SelectionKey key = iter.next();
+                // 获得事件
+                SelectionKey event = iter.next();
+                // 从事件集中删除
                 iter.remove();
                 // 处理IO事件
-                handleIoEvent(key);
+                handleIoEvent(event);
             }
         }
         // 处理单线程任务
@@ -249,7 +252,7 @@ public class Reactor {
         // 且handleTasks返回false
         // 则可能发生了空轮询bug
         // 也可能是其他线程调用了close方法来关闭了selector
-        if (!r && num_ev == 0 && !token_) {
+        if (!r && numOfEvent == 0 && !token_) {
             rebuildSelector();
         }
     }
@@ -268,14 +271,54 @@ public class Reactor {
     }
 
     // 非阻塞写
+    // 同时您应该在handleIoEvent中加入处理write事件的代码
+
+    // 一个典型的非阻塞写操作的流程如下:
+    // (1)对要写channel启用write事件
+    // (2)在write事件回调中进行写入
+    // (3)当写入完成时必须将write事件禁用,以免再次触发
 
     public void enableWrite(SocketChannel channel) {
-        // 您应该自己实现这里
-        // 添加对某channel的可写监听
+        runInLoop(() -> {
+            // 从监听的channel集合中寻找channel
+            for (SelectionKey key : selector_.keys()) {
+                if (key.channel() == channel) {
+                    key.interestOps(key.interestOps() | SelectionKey.OP_WRITE);
+                }
+            }
+        });
     }
 
     public void disableWrite(SocketChannel channel) {
-        // 您应该自己实现这里
-        // 移除对某channel的可写监听
+        // 此处不使用runInLoop的原因是:您应该只在事件的回调中
+        // 以非异步的方式调用它
+        for (SelectionKey key : selector_.keys()) {
+            if (key.channel() == channel) {
+                key.interestOps(key.interestOps() & ~SelectionKey.OP_WRITE);
+            }
+        }
+    }
+
+    // 非阻塞连接
+    // 同时,您应该在handleIOEvent中加入处理connect事件的代码
+
+    public void enableConnect(SocketChannel channel) {
+        runInLoop(() -> {
+            for (SelectionKey key : selector_.keys()) {
+                if (key.channel() == channel) {
+                    key.interestOps(key.interestOps() | SelectionKey.OP_CONNECT);
+                }
+            }
+        });
+    }
+
+    public void disableConnect(SocketChannel channel) {
+        // 此处不使用runInLoop的原因是:您应该只在事件的回调中
+        // 以非异步的方式调用它
+        for (SelectionKey key : selector_.keys()) {
+            if (key.channel() == channel) {
+                key.interestOps(key.interestOps() & ~SelectionKey.OP_CONNECT);
+            }
+        }
     }
 }
