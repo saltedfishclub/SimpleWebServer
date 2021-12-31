@@ -7,13 +7,13 @@
 
 ---
 
-## 模型列表
+## **模型列表:**
 * Multithread Model Server - one connection per thread
 * Reactor Model Server - basic reactor
 * Reactor Model Server With Thread Pool - reactor + thread pool
 * MultiReactor Model Server - one loop per thread
 
-### **Multithread Model - one connection per thread**
+## **Multithread Model - one connection per thread**
 
 这是最简单的并发服务器模型,通过为每一个连接分配一个线程的方式支持并发。
 
@@ -21,7 +21,7 @@
 
 这个模型不适用于大量连接(_即使是短连接_),**为它添加线程池并不能解决这个问题**(_连接会占用线程池的线程导致工作线程阻塞最终导致线程池停止处理任务或不得不扩大,但加入线程池后能适用于大量短连接_)。
 
-### **Reactor Model - basic reactor**
+## **Reactor Model - basic reactor**
 
 这是最简单的事件驱动服务器模型,**它只有一条线程,但能支持大量连接**(_无论它们是短连接还是长连接_)。
 
@@ -31,7 +31,7 @@
 
 **值得注意的是必须在服务器开始工作前设置好一个统一的回调**(_您可以通过在channel中添加回调队列来缓解这种情况_),否则当事件到达时,将出现不知道调用哪个回调的局面。
 
-### **Reactor Model With Thread Pool - reactor + thread pool**
+## **Reactor Model With Thread Pool - reactor + thread pool**
 
 这个模型是basic reactor的改进,通过添加一个线程池来处理业务逻辑达到,业务与I/O分离的效果。
 
@@ -39,7 +39,7 @@
 
 这个模型能在处理大量连接的同时显著提高CPU利用率(_当负载增加时_),但不能同时对多个连接进行I/O操作,适用于计算密集型应用。
 
-### **MultiReactor Model - one loop per thread**
+## **MultiReactor Model - one loop per thread**
 
 这个模型是basic reactor的改进,通过多个I/O线程执行不同的事件循环来提高CPU利用率(_在负载增加时_)。
 
