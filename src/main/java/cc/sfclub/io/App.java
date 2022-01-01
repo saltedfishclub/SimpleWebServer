@@ -123,7 +123,7 @@ public class App
                     break;
                 default:
                     //未知的类型
-                    System.out.println("Unknow Server Type");
+                    System.out.println("Unknown Server Type");
                     return;
             }
 
