@@ -14,7 +14,6 @@ import java.util.function.Consumer;
 
 //MultiReactor Server
 //使用one loop per thread 模型
-//适用于密集IO 有较强的处理突发IO的能力
 public class MultiReactorServer implements IServer {
 
     //多个Reactor
@@ -22,6 +21,7 @@ public class MultiReactorServer implements IServer {
 
     //指派位置
     //用于轮询调度
+    //将channel平均分给reactor
     private AtomicInteger dispathPos_;
 
     //ServerChannel
@@ -32,7 +32,7 @@ public class MultiReactorServer implements IServer {
 
     public MultiReactorServer(int port,int numOfReactor,BiConsumer<byte[],SocketChannel> readCb,Consumer<SocketChannel> closeCb) throws IOException
     {
-        //num_reactors必须大于或等于1
+        //numOfReactors必须大于或等于1
         if(numOfReactor < 1)
         {
             return;
