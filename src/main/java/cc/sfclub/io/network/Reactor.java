@@ -200,7 +200,7 @@ public class Reactor {
                         // 调用客户端断开回调
                         closeCb_.accept(channel);
                     }
-                } catch (ClosedChannelException ex) {
+                } catch (IOException ex) {
                     // 对端关闭了
                     // 调用客户端断开回调
                     closeCb_.accept(channel);
